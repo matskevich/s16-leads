@@ -28,11 +28,15 @@ class GroupManager:
             Словарь с информацией о группе или None
         """
         try:
-            # Пробуем найти группу по username
-            if not group_identifier.startswith('@'):
-                group_identifier = '@' + group_identifier
-            
-            entity = await self.client.get_entity(group_identifier)
+            # Проверяем, является ли идентификатор числовым ID
+            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
+                # Это ID группы, используем как есть
+                entity = await self.client.get_entity(int(group_identifier))
+            else:
+                # Это username, добавляем @ если нужно
+                if not group_identifier.startswith('@'):
+                    group_identifier = '@' + group_identifier
+                entity = await self.client.get_entity(group_identifier)
             
             if isinstance(entity, (Channel, Chat)):
                 return {
@@ -69,8 +73,14 @@ class GroupManager:
             
             logger.info(f"Получаем участников группы: {group_info['title']}")
             
+            # Определяем идентификатор для iter_participants
+            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
+                group_id = int(group_identifier)
+            else:
+                group_id = group_identifier if group_identifier.startswith('@') else '@' + group_identifier
+            
             # Получаем участников
-            async for user in self.client.iter_participants(group_identifier, limit=limit):
+            async for user in self.client.iter_participants(group_id, limit=limit):
                 if isinstance(user, User) and not user.bot:  # Исключаем ботов
                     participant_info = {
                         'id': user.id,
@@ -115,8 +125,14 @@ class GroupManager:
         try:
             logger.info(f"Поиск участников в группе {group_identifier} по запросу: {query}")
             
+            # Определяем идентификатор для iter_participants
+            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
+                group_id = int(group_identifier)
+            else:
+                group_id = group_identifier if group_identifier.startswith('@') else '@' + group_identifier
+            
             async for user in self.client.iter_participants(
-                group_identifier, 
+                group_id, 
                 search=query, 
                 limit=limit
             ):

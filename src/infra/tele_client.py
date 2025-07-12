@@ -4,6 +4,7 @@ from pathlib import Path
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from dotenv import load_dotenv
+from telethon.tl.types import User
 
 load_dotenv()
 
