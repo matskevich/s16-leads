@@ -1,1 +1,39 @@
 venv/
+
+# Environment variables
+.env
+.envrc
+.env.local
+.env.production
+
+# Telegram session files
+*.session
+data/sessions/
+
+# Project specific
+runs/
+data/export/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

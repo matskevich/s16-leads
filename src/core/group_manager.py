@@ -1,0 +1,180 @@
+import asyncio
+from typing import List, Optional, Dict, Any
+from telethon import TelegramClient
+from telethon.tl.types import User, Channel, Chat
+from telethon.errors import ChatAdminRequiredError, FloodWaitError
+from telethon.tl.functions.channels import GetParticipantsRequest
+from telethon.tl.types import ChannelParticipantsSearch
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class GroupManager:
+    """Менеджер для работы с группами Telegram"""
+    
+    def __init__(self, client: TelegramClient):
+        self.client = client
+    
+    async def get_group_info(self, group_identifier: str) -> Optional[Dict[str, Any]]:
+        """
+        Получает информацию о группе
+        
+        Args:
+            group_identifier: username группы (без @) или ID группы
+            
+        Returns:
+            Словарь с информацией о группе или None
+        """
+        try:
+            # Пробуем найти группу по username
+            if not group_identifier.startswith('@'):
+                group_identifier = '@' + group_identifier
+            
+            entity = await self.client.get_entity(group_identifier)
+            
+            if isinstance(entity, (Channel, Chat)):
+                return {
+                    'id': entity.id,
+                    'title': entity.title,
+                    'username': getattr(entity, 'username', None),
+                    'participants_count': getattr(entity, 'participants_count', 0),
+                    'type': 'channel' if isinstance(entity, Channel) else 'group'
+                }
+            
+        except Exception as e:
+            logger.error(f"Ошибка при получении информации о группе {group_identifier}: {e}")
+            return None
+    
+    async def get_participants(self, group_identifier: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Получает список участников группы
+        
+        Args:
+            group_identifier: username группы (без @) или ID группы
+            limit: максимальное количество участников для получения
+            
+        Returns:
+            Список словарей с информацией об участниках
+        """
+        participants = []
+        
+        try:
+            # Получаем информацию о группе
+            group_info = await self.get_group_info(group_identifier)
+            if not group_info:
+                logger.error(f"Не удалось найти группу: {group_identifier}")
+                return []
+            
+            logger.info(f"Получаем участников группы: {group_info['title']}")
+            
+            # Получаем участников
+            async for user in self.client.iter_participants(group_identifier, limit=limit):
+                if isinstance(user, User) and not user.bot:  # Исключаем ботов
+                    participant_info = {
+                        'id': user.id,
+                        'username': user.username,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'phone': user.phone,
+                        'is_bot': user.bot,
+                        'is_verified': user.verified,
+                        'is_premium': getattr(user, 'premium', False),
+                        'status': str(user.status) if user.status else None
+                    }
+                    participants.append(participant_info)
+            
+            logger.info(f"Получено {len(participants)} участников из группы {group_info['title']}")
+            return participants
+            
+        except ChatAdminRequiredError:
+            logger.error(f"Нет прав администратора для получения участников группы: {group_identifier}")
+            return []
+        except FloodWaitError as e:
+            logger.error(f"Превышен лимит запросов. Ожидание {e.seconds} секунд")
+            return []
+        except Exception as e:
+            logger.error(f"Ошибка при получении участников группы {group_identifier}: {e}")
+            return []
+    
+    async def search_participants(self, group_identifier: str, query: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Ищет участников в группе по запросу
+        
+        Args:
+            group_identifier: username группы (без @) или ID группы
+            query: поисковый запрос
+            limit: максимальное количество результатов
+            
+        Returns:
+            Список найденных участников
+        """
+        participants = []
+        
+        try:
+            logger.info(f"Поиск участников в группе {group_identifier} по запросу: {query}")
+            
+            async for user in self.client.iter_participants(
+                group_identifier, 
+                search=query, 
+                limit=limit
+            ):
+                if isinstance(user, User) and not user.bot:
+                    participant_info = {
+                        'id': user.id,
+                        'username': user.username,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'phone': user.phone,
+                        'is_bot': user.bot,
+                        'is_verified': user.verified,
+                        'is_premium': getattr(user, 'premium', False),
+                        'status': str(user.status) if user.status else None
+                    }
+                    participants.append(participant_info)
+            
+            logger.info(f"Найдено {len(participants)} участников по запросу '{query}'")
+            return participants
+            
+        except Exception as e:
+            logger.error(f"Ошибка при поиске участников: {e}")
+            return []
+    
+    async def export_participants_to_csv(self, group_identifier: str, filename: str, limit: int = 1000) -> bool:
+        """
+        Экспортирует список участников в CSV файл
+        
+        Args:
+            group_identifier: username группы (без @) или ID группы
+            filename: имя файла для сохранения
+            limit: максимальное количество участников
+            
+        Returns:
+            True если экспорт успешен, False в противном случае
+        """
+        import csv
+        
+        try:
+            participants = await self.get_participants(group_identifier, limit)
+            
+            if not participants:
+                logger.warning("Нет участников для экспорта")
+                return False
+            
+            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+                fieldnames = ['id', 'username', 'first_name', 'last_name', 'phone', 'is_verified', 'is_premium', 'status']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                writer.writeheader()
+                for participant in participants:
+                    # Очищаем данные для CSV
+                    clean_participant = {k: v for k, v in participant.items() if k in fieldnames}
+                    writer.writerow(clean_participant)
+            
+            logger.info(f"Экспортировано {len(participants)} участников в файл {filename}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка при экспорте в CSV: {e}")
+            return False 
