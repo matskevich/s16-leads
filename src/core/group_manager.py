@@ -6,6 +6,7 @@ from telethon.errors import ChatAdminRequiredError, FloodWaitError
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import ChannelParticipantsSearch
 import logging
+from src.infra.limiter import safe_call, smart_pause
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -31,12 +32,12 @@ class GroupManager:
             # Проверяем, является ли идентификатор числовым ID
             if group_identifier.startswith('-') and group_identifier[1:].isdigit():
                 # Это ID группы, используем как есть
-                entity = await self.client.get_entity(int(group_identifier))
+                entity = await safe_call(self.client.get_entity, int(group_identifier), operation_type="api")
             else:
                 # Это username, добавляем @ если нужно
                 if not group_identifier.startswith('@'):
                     group_identifier = '@' + group_identifier
-                entity = await self.client.get_entity(group_identifier)
+                entity = await safe_call(self.client.get_entity, group_identifier, operation_type="api")
             
             if isinstance(entity, (Channel, Chat)):
                 return {
@@ -79,7 +80,8 @@ class GroupManager:
             else:
                 group_id = group_identifier if group_identifier.startswith('@') else '@' + group_identifier
             
-            # Получаем участников
+            # Получаем участников с anti-spam защитой
+            count = 0
             async for user in self.client.iter_participants(group_id, limit=limit):
                 if isinstance(user, User) and not user.bot:  # Исключаем ботов
                     participant_info = {
@@ -94,6 +96,11 @@ class GroupManager:
                         'status': str(user.status) if user.status else None
                     }
                     participants.append(participant_info)
+                    count += 1
+                    
+                    # Smart pause каждые 1000 участников для предотвращения FLOOD_WAIT
+                    if count % 1000 == 0:
+                        await smart_pause("participants", count)
             
             logger.info(f"Получено {len(participants)} участников из группы {group_info['title']}")
             return participants

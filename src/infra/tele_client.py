@@ -5,6 +5,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from dotenv import load_dotenv
 from telethon.tl.types import User
+from .limiter import safe_call, get_rate_limiter
 
 load_dotenv()
 
@@ -30,12 +31,20 @@ def get_client():
     return _client
 
 async def test_connection():
-    """Тестирует подключение к Telegram API"""
+    """Тестирует подключение к Telegram API с anti-spam защитой"""
     try:
         client = get_client()
         await client.start()
-        me = await client.get_me()
+        
+        # Используем safe_call для get_me()
+        me = await safe_call(client.get_me, operation_type="api")
         print(f"✅ Подключение успешно: {me.username} (ID: {me.id})")
+        
+        # Показываем статистику anti-spam системы
+        limiter = get_rate_limiter()
+        stats = limiter.get_stats()
+        print(f"🛡️  Anti-spam статус: API calls: {stats['api_calls']}, RPS: {stats['current_rps']}")
+        
         await client.disconnect()
         return True
     except SessionPasswordNeededError:
