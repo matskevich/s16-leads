@@ -44,3 +44,4 @@ temp/
 # Participant data files (contain personal information)
 s16_*_participants.json
 *_participants.json
+data/anti_spam/

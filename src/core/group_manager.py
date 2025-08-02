@@ -29,9 +29,12 @@ class GroupManager:
             Словарь с информацией о группе или None
         """
         try:
-            # Проверяем, является ли идентификатор числовым ID
-            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
-                # Это ID группы, используем как есть
+            # Проверяем тип идентификатора
+            if isinstance(group_identifier, int):
+                # Это числовой ID группы
+                entity = await safe_call(self.client.get_entity, group_identifier, operation_type="api")
+            elif isinstance(group_identifier, str) and (group_identifier.startswith('-') and group_identifier[1:].isdigit()):
+                # Это строковый ID группы
                 entity = await safe_call(self.client.get_entity, int(group_identifier), operation_type="api")
             else:
                 # Это username, добавляем @ если нужно
@@ -75,7 +78,9 @@ class GroupManager:
             logger.info(f"Получаем участников группы: {group_info['title']}")
             
             # Определяем идентификатор для iter_participants
-            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
+            if isinstance(group_identifier, int):
+                group_id = group_identifier
+            elif isinstance(group_identifier, str) and (group_identifier.startswith('-') and group_identifier[1:].isdigit()):
                 group_id = int(group_identifier)
             else:
                 group_id = group_identifier if group_identifier.startswith('@') else '@' + group_identifier
@@ -133,7 +138,9 @@ class GroupManager:
             logger.info(f"Поиск участников в группе {group_identifier} по запросу: {query}")
             
             # Определяем идентификатор для iter_participants
-            if group_identifier.startswith('-') and group_identifier[1:].isdigit():
+            if isinstance(group_identifier, int):
+                group_id = group_identifier
+            elif isinstance(group_identifier, str) and (group_identifier.startswith('-') and group_identifier[1:].isdigit()):
                 group_id = int(group_identifier)
             else:
                 group_id = group_identifier if group_identifier.startswith('@') else '@' + group_identifier
