@@ -186,14 +186,7 @@ telegram-api-audit:
 	python scripts/check_anti_spam_compliance.py
 	@echo ""
 	@echo "=== 4. Checking rate limiter usage ==="
-	@python -c "
-from src.infra.limiter import get_rate_limiter
-limiter = get_rate_limiter()
-stats = limiter.get_stats()
-print('📊 Rate Limiter Stats:')
-for key, value in stats.items():
-    print(f'   {key}: {value}')
-" 2>/dev/null || echo "❌ Rate limiter not accessible"
+	@python -c "from src.infra.limiter import get_rate_limiter; limiter = get_rate_limiter(); stats = limiter.get_stats(); print('📊 Rate Limiter Stats:'); [print(f'   {k}: {v}') for k, v in stats.items()]" 2>/dev/null || echo "❌ Rate limiter not accessible"
 
 # Quick development checks (before commit)
 dev-check: format lint anti-spam-check
