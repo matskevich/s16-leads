@@ -92,6 +92,9 @@ PYTHONPATH=. python3 src/cli.py search -1002540509234 --query "Dmitry"
 
 # Экспорт участников
 PYTHONPATH=. python3 src/cli.py export -1002540509234 --output data/export/members.json
+
+# Дата создания группы (новая функция!)
+PYTHONPATH=. python3 src/cli.py creation-date -1002188344480
 ```
 
 ### S16 специальные команды:
