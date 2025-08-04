@@ -116,9 +116,9 @@ async def test_search_participants_success(mock_telegram_client, mock_participan
     assert len(participants) == 1
     assert participants[0]['username'] == "test_user"
     
-    # Проверяем, что поиск вызван с правильными параметрами
+    # Проверяем, что поиск вызван с правильными параметрами (с добавленным @)
     mock_telegram_client.iter_participants.assert_called_once_with(
-        "testgroup", search="test", limit=10
+        "@testgroup", search="test", limit=10
     )
 
 @pytest.mark.asyncio
