@@ -107,3 +107,108 @@ participants:
 export:
 	@if [ -z "$(GROUP_ID)" ]; then echo "❌ Usage: make export GROUP_ID=-1001234567890 OUTPUT=data/export/members.json"; exit 1; fi
 	PYTHONPATH=. python src/cli.py export $(GROUP_ID) --output $(or $(OUTPUT),data/export/members.json) --format $(or $(FORMAT),json)
+
+# =====================================================
+# ANTI-SPAM COMPLIANCE AND SECURITY CHECKS
+# =====================================================
+
+# Check anti-spam compliance for all Telegram API calls
+anti-spam-check:
+	@echo "🔍 Checking anti-spam compliance..."
+	python scripts/check_anti_spam_compliance.py
+
+# Run comprehensive security checks
+security-check:
+	@echo "🔒 Running comprehensive security checks..."
+	@echo "=== Bandit Security Scan ==="
+	bandit -r src/ examples/ -f json -o security-report.json 2>/dev/null || bandit -r src/ examples/
+	@echo "=== Anti-spam Compliance ==="
+	python scripts/check_anti_spam_compliance.py
+
+# Code quality checks
+lint:
+	@echo "🔍 Running code linting..."
+	flake8 src/ examples/ tests/ scripts/ --max-line-length=100 --ignore=E203,W503
+
+# Format code
+format:
+	@echo "🎨 Formatting code..."
+	black src/ examples/ tests/ scripts/
+	isort src/ examples/ tests/ scripts/
+
+# Check code formatting
+format-check:
+	@echo "🎨 Checking code formatting..."
+	black --check src/ examples/ tests/ scripts/
+	isort --check src/ examples/ tests/ scripts/
+
+# Install development dependencies
+dev-install:
+	@echo "📦 Installing development dependencies..."
+	pip install -r requirements.txt
+	pip install pre-commit black isort flake8 bandit yamllint pytest-mock
+	@echo "✅ Development dependencies installed"
+
+# Set up pre-commit hooks
+pre-commit-setup: dev-install
+	@echo "🪝 Setting up pre-commit hooks..."
+	pre-commit install
+	pre-commit install --hook-type commit-msg
+	@echo "✅ Pre-commit hooks installed"
+
+# Run pre-commit on all files
+pre-commit-run:
+	@echo "🪝 Running pre-commit on all files..."
+	pre-commit run --all-files
+
+# Comprehensive checks (CI pipeline)
+check-all: format-check lint anti-spam-check security-check test
+	@echo "✅ All checks completed successfully!"
+
+# Telegram API safety audit
+telegram-api-audit:
+	@echo "🔍 Running comprehensive Telegram API audit..."
+	@echo "=== 1. Checking for unsafe client calls ==="
+	@echo "Searching for direct client.* calls without safe_call wrapper..."
+	@grep -r "await.*client\." src/ examples/ --include="*.py" | \
+		grep -v "safe_call\|_safe_api_call\|client\.start\|client\.disconnect\|client\.get_me" || \
+		echo "✅ No unsafe client calls found"
+	@echo ""
+	@echo "=== 2. Checking for missing safe_call imports ==="
+	@echo "Looking for files that might need safe_call imports..."
+	@for file in $$(find src/ examples/ -name "*.py" -type f); do \
+		if grep -q "client\." "$$file" && ! grep -q "safe_call\|_safe_api_call" "$$file" && ! grep -q "__init__" "$$file"; then \
+			echo "⚠️  $$file might need safe_call import"; \
+		fi; \
+	done || echo "✅ All files with client calls have safe_call imports"
+	@echo ""
+	@echo "=== 3. Running anti-spam compliance check ==="
+	python scripts/check_anti_spam_compliance.py
+	@echo ""
+	@echo "=== 4. Checking rate limiter usage ==="
+	@python -c "
+from src.infra.limiter import get_rate_limiter
+limiter = get_rate_limiter()
+stats = limiter.get_stats()
+print('📊 Rate Limiter Stats:')
+for key, value in stats.items():
+    print(f'   {key}: {value}')
+" 2>/dev/null || echo "❌ Rate limiter not accessible"
+
+# Quick development checks (before commit)
+dev-check: format lint anti-spam-check
+	@echo "✅ Development checks completed!"
+
+# Help with new anti-spam commands
+help-security:
+	@echo "🛡️  Security and Anti-spam Commands:"
+	@echo "  anti-spam-check     - Check all Telegram API calls for safe_call usage"
+	@echo "  security-check      - Run bandit security scan + anti-spam check"  
+	@echo "  telegram-api-audit  - Comprehensive audit of Telegram API usage"
+	@echo "  lint               - Run code linting with flake8"
+	@echo "  format             - Format code with black and isort"
+	@echo "  format-check       - Check if code is properly formatted"
+	@echo "  pre-commit-setup   - Install pre-commit hooks for automatic checks"
+	@echo "  pre-commit-run     - Run all pre-commit checks manually"
+	@echo "  check-all          - Run all checks (format, lint, security, tests)"
+	@echo "  dev-check          - Quick checks before committing"
