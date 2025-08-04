@@ -12,7 +12,7 @@ from src.core.group_manager import GroupManager
 
 async def main():
     parser = argparse.ArgumentParser(description='S16-Leads: Работа с группами Telegram')
-    parser.add_argument('command', choices=['info', 'participants', 'search', 'export'], 
+    parser.add_argument('command', choices=['info', 'participants', 'search', 'export', 'creation-date'], 
                        help='Команда для выполнения')
     parser.add_argument('group', help='Username группы (без @) или ID группы')
     parser.add_argument('--limit', type=int, default=100, 
@@ -49,6 +49,9 @@ async def main():
                 print("❌ Для команды export необходимо указать --output")
                 return
             await handle_export(group_manager, args.group, args.output, args.limit)
+            
+        elif args.command == 'creation-date':
+            await handle_creation_date(group_manager, args.group)
         
         await client.disconnect()
         
@@ -133,6 +136,42 @@ async def handle_export(group_manager: GroupManager, group: str, output: str, li
     
     if not success:
         print("❌ Ошибка при экспорте")
+
+async def handle_creation_date(group_manager: GroupManager, group: str):
+    """Обработка команды creation-date"""
+    print(f"📅 Получение даты создания группы {group}...")
+    
+    creation_date = await group_manager.get_group_creation_date(group)
+    
+    if creation_date:
+        formatted_date = creation_date.strftime("%Y-%m-%d %H:%M:%S UTC")
+        formatted_date_short = creation_date.strftime("%Y-%m-%d")
+        
+        print(f"✅ Группа создана: {formatted_date}")
+        print(f"📊 Краткий формат: {formatted_date_short}")
+        
+        # Дополнительная информация
+        from datetime import datetime
+        now = datetime.now(creation_date.tzinfo)
+        age = now - creation_date
+        
+        years = age.days // 365
+        months = (age.days % 365) // 30
+        days = age.days % 30
+        
+        age_str = []
+        if years > 0:
+            age_str.append(f"{years} лет")
+        if months > 0:
+            age_str.append(f"{months} месяцев")
+        if days > 0:
+            age_str.append(f"{days} дней")
+        
+        if age_str:
+            print(f"🕐 Возраст группы: {', '.join(age_str)}")
+        
+    else:
+        print("❌ Не удалось получить дату создания группы")
 
 if __name__ == "__main__":
     asyncio.run(main())

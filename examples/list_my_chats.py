@@ -112,15 +112,21 @@ async def main():
         print(f"\n📊 СТАТИСТИКА ГРУПП И КАНАЛОВ:")
         print(f"Всего групп/каналов: {len(groups_data)}")
         
-        # Сортируем по количеству участников
-        groups_data.sort(key=lambda x: x.get('participants_count', 0), reverse=True)
+        # Сортируем по количеству участников (обрабатываем None значения)
+        groups_data.sort(key=lambda x: x.get('participants_count') or 0, reverse=True)
         
-        print(f"\n🔝 ТОП-10 по участникам:")
-        for i, group in enumerate(groups_data[:10], 1):
-            title = group['title'][:35]
-            participants = group.get('participants_count', 0)
+        print(f"\n📋 ПОЛНЫЙ СПИСОК ГРУПП/КАНАЛОВ (отсортировано по участникам):")
+        print(f"{'№':>3} | {'Тип':^4} | {'Участники':>10} | {'ID':>15} | Название")
+        print("-" * 80)
+        
+        for i, group in enumerate(groups_data, 1):
+            title = group['title'][:40] if group['title'] else "Без названия"
+            participants = group.get('participants_count')
+            participants_str = str(participants) if participants is not None else "неизв"
             group_type = "🏢" if group['type'] == 'channel' else "👥"
-            print(f"   {i:2d}. {group_type} {title} - {participants} чел.")
+            group_id = str(group['id'])
+            
+            print(f"{i:3d} | {group_type:^4} | {participants_str:>10} | {group_id:>15} | {title}")
 
 if __name__ == "__main__":
     asyncio.run(main()) 

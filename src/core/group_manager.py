@@ -1,6 +1,7 @@
 import asyncio
 import os
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+from typing import List, Optional, Dict, Any, Union
 from telethon import TelegramClient
 from telethon.tl.types import User, Channel, Chat
 from telethon.errors import ChatAdminRequiredError, FloodWaitError
@@ -66,11 +67,34 @@ class GroupManager:
                 entity = await _safe_api_call(self.client.get_entity, group_identifier)
             
             if isinstance(entity, (Channel, Chat)):
+                # Получаем количество участников с дополнительной проверкой
+                participants_count = getattr(entity, 'participants_count', None)
+                
+                # Если participants_count отсутствует или равен 0, пытаемся получить более точное число
+                if participants_count is None or participants_count == 0:
+                    try:
+                        # Для публичных каналов/групп пытаемся получить full info
+                        async def get_full_info():
+                            if isinstance(entity, Channel):
+                                from telethon.tl.functions.channels import GetFullChannelRequest
+                                full_info = await self.client(GetFullChannelRequest(entity))
+                                return getattr(full_info.full_chat, 'participants_count', None)
+                            else:
+                                from telethon.tl.functions.messages import GetFullChatRequest
+                                full_info = await self.client(GetFullChatRequest(entity.id))
+                                return getattr(full_info.full_chat, 'participants_count', None)
+                        
+                        full_participants_count = await _safe_api_call(get_full_info)
+                        if full_participants_count is not None:
+                            participants_count = full_participants_count
+                    except Exception as e:
+                        logger.debug(f"Не удалось получить полную информацию о группе {entity.id}: {e}")
+                
                 return {
                     'id': entity.id,
                     'title': entity.title,
                     'username': getattr(entity, 'username', None),
-                    'participants_count': getattr(entity, 'participants_count', 0),
+                    'participants_count': participants_count,
                     'type': 'channel' if isinstance(entity, Channel) else 'group'
                 }
             
@@ -251,4 +275,52 @@ class GroupManager:
             
         except Exception as e:
             logger.error(f"Ошибка при экспорте в CSV: {e}")
-            return False 
+            return False
+    
+    async def get_group_creation_date(self, group_identifier: Union[str, int]) -> Optional[datetime]:
+        """
+        Получает приблизительную дату создания группы через первое сообщение
+        
+        Использует быстрый метод: iter_messages(reverse=True, limit=1)
+        Всего 1 API вызов даже для групп с миллионами сообщений
+        
+        Args:
+            group_identifier: username группы (без @) или ID группы
+            
+        Returns:
+            datetime объект с датой создания или None при ошибке
+        """
+        try:
+            # Нормализуем идентификатор группы (как в других методах)
+            if isinstance(group_identifier, int):
+                # Это числовой ID группы - используем как есть
+                entity_id = group_identifier
+            elif isinstance(group_identifier, str) and (group_identifier.startswith('-') and group_identifier[1:].isdigit()):
+                # Это строковый ID группы - конвертируем в int
+                entity_id = int(group_identifier)
+            else:
+                # Это username - добавляем @ если нужно
+                if not group_identifier.startswith('@'):
+                    entity_id = '@' + group_identifier
+                else:
+                    entity_id = group_identifier
+            
+            # Функция для получения первого сообщения
+            async def get_first_message():
+                async for msg in self.client.iter_messages(entity_id, reverse=True, limit=1):
+                    return msg.date
+                return None
+            
+            # Вызываем через safe_call для анти-спам защиты
+            creation_date = await _safe_api_call(get_first_message)
+            
+            if creation_date:
+                logger.info(f"Получена дата создания группы {group_identifier}: {creation_date}")
+                return creation_date
+            else:
+                logger.warning(f"Не удалось получить дату создания для группы {group_identifier}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Ошибка при получении даты создания группы {group_identifier}: {e}")
+            return None 

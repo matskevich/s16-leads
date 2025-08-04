@@ -1,5 +1,5 @@
 date=2025-08-04
 dm_count=0
 join_count=0
-api_calls=17
+api_calls=229
 flood_waits=0
