@@ -73,7 +73,7 @@ def main():
     print("\n3. Проверка подключения к Telegram:")
     try:
         import asyncio
-        from src.infra.tele_client import test_connection
+        from tg_core.infra.tele_client import test_connection
 
         success = asyncio.run(test_connection())
         if success:

@@ -5,9 +5,12 @@
 """
 
 import asyncio
-from src.core.s16_config import get_s16_config, get_space_group_id, get_space_group_name
-from src.infra.tele_client import get_client
-from src.core.group_manager import GroupManager
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # adds apps/s16-leads to sys.path
+from app.config import get_s16_config, get_space_group_id, get_space_group_name
+from tg_core.infra.tele_client import get_client
+from tg_core.domain.groups import GroupManager
 
 
 async def test_s16_config():

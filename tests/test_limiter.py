@@ -21,7 +21,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from telethon.errors import FloodWaitError
 
 # Импортируем наши модули
-from src.infra.limiter import (
+from tg_core.infra.limiter import (
     TokenBucket, 
     RateLimiter, 
     safe_call, 
@@ -349,7 +349,7 @@ class TestIntegration:
     def test_singleton_pattern(self):
         """Тест Singleton паттерна для get_rate_limiter"""
         # Очищаем глобальную переменную
-        import src.infra.limiter
+        import tg_core.infra.limiter as limiter
         src.infra.limiter._rate_limiter = None
         
         # Получаем два экземпляра
