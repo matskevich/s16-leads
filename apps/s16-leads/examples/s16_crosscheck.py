@@ -7,8 +7,8 @@ S16 Cross-Check Example
 import asyncio
 import argparse
 from pathlib import Path
-from src.infra.tele_client import get_client
-from src.core.group_manager import GroupManager
+from tg_core.infra.tele_client import get_client
+from tg_core.domain.groups import GroupManager
 from src.core.s16_config import get_space_group_id, get_space_group_name
 
 

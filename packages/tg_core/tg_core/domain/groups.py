@@ -8,7 +8,7 @@ from telethon.errors import ChatAdminRequiredError, FloodWaitError
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import ChannelParticipantsSearch
 import logging
-from src.infra.limiter import safe_call, smart_pause
+from tg_core.infra.limiter import safe_call, smart_pause
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

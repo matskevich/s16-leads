@@ -5,9 +5,9 @@
 """
 
 import asyncio
-from src.infra.tele_client import get_client
-from src.infra.limiter import safe_call, get_rate_limiter
-from src.core.group_manager import GroupManager
+from tg_core.infra.tele_client import get_client
+from tg_core.infra.limiter import safe_call, get_rate_limiter
+from tg_core.domain.groups import GroupManager
 import logging
 
 logger = logging.getLogger(__name__)

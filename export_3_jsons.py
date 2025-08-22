@@ -10,9 +10,9 @@ import os
 from datetime import datetime
 from typing import Dict, List, Set
 
-from src.infra.tele_client import get_client
-from src.infra.limiter import get_rate_limiter, smart_pause
-from src.core.group_manager import GroupManager
+from tg_core.infra.tele_client import get_client
+from tg_core.infra.limiter import get_rate_limiter, smart_pause
+from tg_core.domain.groups import GroupManager
 import logging
 
 logger = logging.getLogger(__name__)
