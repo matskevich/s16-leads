@@ -16,8 +16,8 @@ python3 src/cli.py creation-date "1234567890"
 
 ### Programmatic Usage
 ```python
-from src.core.group_manager import GroupManager
-from src.infra.tele_client import get_client
+from tg_core.domain.groups import GroupManager
+from tg_core.infra.tele_client import get_client
 
 async def get_creation_date():
     client = get_client()

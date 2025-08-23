@@ -61,7 +61,7 @@ PYTHONPATH=. python3 examples/s16_crosscheck.py -1002540509234 \
 
 ### Конфигурация:
 ```python
-from src.core.s16_config import get_space_group_id, is_cross_check_enabled
+from apps.s16leads.app.config import get_space_group_id, is_cross_check_enabled
 
 # Получение ID основной группы
 space_id = get_space_group_id()  # -1002188344480

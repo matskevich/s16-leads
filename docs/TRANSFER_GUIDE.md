@@ -105,8 +105,8 @@ python3 examples/test_group_functions.py
 
 ### Пример 3: Получение участников группы
 ```python
-from src.infra.tele_client import get_client
-from src.core.group_manager import GroupManager
+from tg_core.infra.tele_client import get_client
+from tg_core.domain.groups import GroupManager
 
 async def get_participants_example():
     client = get_client()
