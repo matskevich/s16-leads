@@ -85,7 +85,7 @@ async def test_cli_search_command(mock_telegram_client, sample_participants):
 @pytest.mark.asyncio
 async def test_cli_export_command_json(mock_telegram_client, sample_participants, tmp_path):
     """Тест команды export с JSON форматом"""
-    with patch('src.cli.get_client') as mock_get_client:
+    with patch('apps.s16leads.cli.get_client') as mock_get_client:
         mock_get_client.return_value = mock_telegram_client
         
         with patch('src.cli.GroupManager') as mock_group_manager_class:
@@ -108,7 +108,7 @@ async def test_cli_export_command_json(mock_telegram_client, sample_participants
 @pytest.mark.asyncio
 async def test_cli_export_command_csv(mock_telegram_client, sample_participants, tmp_path):
     """Тест команды export с CSV форматом"""
-    with patch('src.cli.get_client') as mock_get_client:
+    with patch('apps.s16leads.cli.get_client') as mock_get_client:
         mock_get_client.return_value = mock_telegram_client
         
         with patch('src.cli.GroupManager') as mock_group_manager_class:
