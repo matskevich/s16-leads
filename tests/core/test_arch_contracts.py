@@ -6,11 +6,15 @@ from pathlib import Path
 def test_tg_core_does_not_import_apps():
     # make sure tg_core is importable
     sys.path.append(str(Path(__file__).resolve().parents[2] / "packages" / "tg_core"))
-    import tg_core  # noqa: F401
 
-    # ensure no module named apps.* is imported as dependency of tg_core
-    imported_apps = [name for _, name, _ in pkgutil.iter_modules() if name.startswith("apps")]
-    assert not imported_apps, "tg_core must not import apps.*"
+    before = set(sys.modules.keys())
+    import tg_core  # noqa: F401
+    after = set(sys.modules.keys())
+
+    # modules loaded as a result of importing tg_core
+    newly_loaded = after - before
+    offenders = [m for m in newly_loaded if m.startswith("apps.")]
+    assert offenders == [], f"tg_core import must not pull apps.* modules: {offenders}"
 
 
 def test_apps_have_no_direct_telethon_imports():

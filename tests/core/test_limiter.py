@@ -7,7 +7,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[2] / "packages" / "tg_core"))
 
 import tg_core.infra.limiter as limiter
-from telethon.errors import FloodWaitError
+from types import SimpleNamespace
 
 
 class _FakeBucket:
@@ -63,11 +63,18 @@ def test_safe_call_retries_on_floodwait_and_succeeds(monkeypatch):
 
     call_state = {"attempt": 0}
 
+    # Provide a minimal FloodWaitError replacement compatible with limiter
+    class _FakeFloodWaitError(Exception):
+        def __init__(self, seconds: int):
+            self.seconds = seconds
+
+    # monkeypatch limiter's FloodWaitError to our fake
+    monkeypatch.setattr(limiter, "FloodWaitError", _FakeFloodWaitError, raising=False)
+
     async def flaky_func():
         call_state["attempt"] += 1
         if call_state["attempt"] < 3:
-            # Raise FLOOD_WAIT with 0 seconds to avoid real wait (sleep is patched anyway)
-            raise FloodWaitError(request=None, capture=None, seconds=0)
+            raise limiter.FloodWaitError(seconds=0)
         return 42
 
     result = asyncio.run(limiter.safe_call(flaky_func, operation_type="api", max_retries=3))

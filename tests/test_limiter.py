@@ -189,7 +189,7 @@ class TestSafeCall:
         """Настройка перед каждым тестом"""
         self.temp_dir = tempfile.mkdtemp()
         # Патчим глобальный rate limiter
-        self.patcher = patch('src.infra.limiter._rate_limiter', 
+        self.patcher = patch('tg_core.infra.limiter._rate_limiter', 
                            RateLimiter(data_dir=self.temp_dir))
         self.patcher.start()
     
@@ -322,7 +322,7 @@ class TestIntegration:
     async def test_rate_limiter_with_safe_call_integration(self):
         """Интеграционный тест rate limiter с safe_call"""
         # Создаем limiter с быстрым RPS для теста
-        with patch('src.infra.limiter._rate_limiter', 
+        with patch('tg_core.infra.limiter._rate_limiter', 
                    RateLimiter(rps=10.0, data_dir=self.temp_dir)):
             
             call_count = 0
@@ -350,7 +350,7 @@ class TestIntegration:
         """Тест Singleton паттерна для get_rate_limiter"""
         # Очищаем глобальную переменную
         import tg_core.infra.limiter as limiter
-        src.infra.limiter._rate_limiter = None
+        limiter._rate_limiter = None
         
         # Получаем два экземпляра
         limiter1 = get_rate_limiter()
@@ -362,7 +362,7 @@ class TestIntegration:
     @pytest.mark.asyncio 
     async def test_complete_workflow_simulation(self):
         """Симуляция полного workflow с anti-spam защитой"""
-        with patch('src.infra.limiter._rate_limiter', 
+        with patch('tg_core.infra.limiter._rate_limiter', 
                    RateLimiter(rps=20.0, data_dir=self.temp_dir)):  # Быстрый RPS для теста
             
             # Симулируем получение участников группы

@@ -9,10 +9,7 @@ import argparse
 from pathlib import Path
 from tg_core.infra.tele_client import get_client
 from tg_core.domain.groups import GroupManager
-from pathlib import Path
-import sys
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # adds apps/s16-leads to sys.path
-from app.config import get_space_group_id, get_space_group_name
+from apps.s16leads.app.config import get_space_group_id, get_space_group_name
 
 
 async def s16_crosscheck(target_group_id: int, target_group_name: str = None, output_file: str = None):
