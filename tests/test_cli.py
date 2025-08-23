@@ -88,7 +88,7 @@ async def test_cli_export_command_json(mock_telegram_client, sample_participants
     with patch('apps.s16leads.cli.get_client') as mock_get_client:
         mock_get_client.return_value = mock_telegram_client
         
-        with patch('src.cli.GroupManager') as mock_group_manager_class:
+        with patch('apps.s16leads.cli.GroupManager') as mock_group_manager_class:
             mock_group_manager = AsyncMock()
             mock_group_manager_class.return_value = mock_group_manager
             mock_group_manager.get_participants.return_value = sample_participants
@@ -111,7 +111,7 @@ async def test_cli_export_command_csv(mock_telegram_client, sample_participants,
     with patch('apps.s16leads.cli.get_client') as mock_get_client:
         mock_get_client.return_value = mock_telegram_client
         
-        with patch('src.cli.GroupManager') as mock_group_manager_class:
+        with patch('apps.s16leads.cli.GroupManager') as mock_group_manager_class:
             mock_group_manager = AsyncMock()
             mock_group_manager_class.return_value = mock_group_manager
             mock_group_manager.export_participants_to_csv.return_value = True
