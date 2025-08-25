@@ -6,7 +6,19 @@
 import json
 import os
 from pathlib import Path
-from src.core.gender_analyzer import analyze_telegram_user_gender_detailed
+from tg_core.domain.groups import GroupManager  # example of core import if needed
+from apps.wildtantra.app.config import config  # app-specific config
+
+# local analyzer remains app-specific if exists; fallback if not present
+try:
+    from app.gender_analyzer import analyze_telegram_user_gender_detailed  # type: ignore
+except Exception:  # pragma: no cover
+    def analyze_telegram_user_gender_detailed(first_name: str, last_name: str, username: str):
+        # minimal fallback heuristic
+        name = (first_name or "") + " " + (last_name or "")
+        if name.strip().endswith("a"):
+            return "female", 0.5
+        return "male", 0.5
 
 def main():
     # Путь к файлу

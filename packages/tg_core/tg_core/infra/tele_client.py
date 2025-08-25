@@ -7,6 +7,12 @@ from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
 from dotenv import load_dotenv
 from telethon.tl.types import User
 from .limiter import safe_call, get_rate_limiter
+from .metrics import (
+    increment_rate_limit_requests_total,
+    increment_rate_limit_throttled_total,
+    increment_flood_wait_events_total,
+    observe_tele_call_latency_seconds,
+)
 
 load_dotenv()
 
@@ -58,8 +64,19 @@ async def test_connection():
         client = get_client()
         await client.start()
         
-        # Используем safe_call для get_me()
-        me = await safe_call(client.get_me, operation_type="api")
+        # Используем safe_call для get_me() и метрики
+        import time
+        start = time.perf_counter()
+        try:
+            increment_rate_limit_requests_total()
+            me = await safe_call(client.get_me, operation_type="api")
+        except Exception as e:
+            # Простейшая эвристика для FLOOD_WAIT
+            if hasattr(e, "seconds"):
+                increment_flood_wait_events_total()
+            raise
+        finally:
+            observe_tele_call_latency_seconds(time.perf_counter() - start)
         print(f"✅ Подключение успешно: {me.username} (ID: {me.id})")
         
         # Показываем статистику anti-spam системы
