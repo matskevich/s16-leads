@@ -27,3 +27,30 @@ def test_apps_have_no_direct_telethon_imports():
     assert offenders == [], f"apps must not import telethon directly: {offenders}"
 
 
+def test_apps_do_not_import_each_other():
+    apps_dir = Path(__file__).resolve().parents[2] / "apps"
+    offenders = []
+    for app_dir in [p for p in apps_dir.iterdir() if p.is_dir()]:
+        app_name = app_dir.name
+        for py in app_dir.rglob("*.py"):
+            text = py.read_text(encoding="utf-8")
+            # forbid imports like from apps.<other>.app ...
+            if "from apps." in text and f"from apps.{app_name}." not in text:
+                offenders.append(str(py))
+    assert offenders == [], f"cross-app imports are forbidden: {offenders}"
+
+
+def test_no_sys_path_append_in_code():
+    repo = Path(__file__).resolve().parents[2]
+    offenders = []
+    for path in repo.rglob("*.py"):
+        # skip tests and scripts
+        rel = path.relative_to(repo)
+        if str(rel).startswith("tests/") or str(rel).startswith("scripts/"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "sys.path.append(" in text:
+            offenders.append(str(rel))
+    assert offenders == [], f"sys.path hacks forbidden in code: {offenders}"
+
+

@@ -3,26 +3,40 @@
 Целевое дерево папок/файлов.
 
 ```text
+apps/
+  s16leads/
+    cli.py
+    app/
+      config.py
+    examples/
+  wildtantra/
+    cli.py
+    app/
+      config.py
+    examples/
+  gconf/
+    cli.py
+    app/
+      config.py
+    examples/
+  kuprianov/
+    cli.py
+    app/
+      config.py
+    examples/
+  vahue/
+    cli.py
+    app/
+      config.py
+    examples/
 packages/
   tg_core/
     tg_core/
       infra/
-        tele_client.py
-        limiter.py
-        logging.py
-        monitors.py   # опционально
       domain/
-        groups.py
       config/
-        loader.py
       typing.py
     pyproject.toml
-apps/
-  s16-leads/
-    cli.py
-    app/
-      config.py       # бывший s16_config.py
-    examples/         # бывшие examples/, относящиеся к S16
 tests/
   core/
     test_limiter.py

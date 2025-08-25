@@ -10,19 +10,19 @@
 - PII/секреты не в код/логи; .env.sample без секретов
 
 # Партии (миграционный маршрут)
-1) Scaffold
+1) Scaffold ✅
    - Создать каркас: packages/tg_core/tg_core/{infra,domain,config}, packages/tg_core/tg_core/typing.py
    - Создать apps/s16-leads и tests/core/*
-2) Move common
+2) Move common ✅
    - Перенести общий код в tg_core: tele_client.py, limiter.py, group_manager.py
    - Добавить tg_core/infra/logging.py, tg_core/config/loader.py, tg_core/typing.py (скелеты)
-3) App split
+3) App split ✅
    - src/cli.py → apps/s16-leads/cli.py
    - S16-скрипты из examples/ → apps/s16-leads/examples/ (или scripts/)
-4) Fix imports
+4) Fix imports ✅
    - Все импорты вида src.infra/*, src.core/* заменить на tg_core.*
    - Установить tg_core локально: `pip install -e packages/tg_core`
-5) Tests & guardrails
+5) Tests & guardrails ✅
    - Базовые тесты лимитера/ретраев и сторожки:
      • core не импортирует apps
      • apps не используют Telethon напрямую
@@ -41,3 +41,9 @@
 - Все Telethon-вызовы проходят через safe_call
 - Тесты зелёные; сторожки активны
 - MIGRATION_PLAN.md / PROPOSED_TREE.md актуальны
+
+# Next
+- Apps skeletons: `apps/{s16leads,wildtantra,gconf,kuprianov,vahue}` ✅
+- Observability: minimal metrics in `tg_core.infra.metrics` ✅
+- CI: GitHub Actions pytest workflow ✅
+- Versioning: `tg_core.__version__=0.1.0`, bump script
